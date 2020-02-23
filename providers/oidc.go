@@ -161,16 +161,13 @@ func (p *OIDCProvider) createSessionState(token *oauth2.Token, idToken *oidc.IDT
 			return nil, fmt.Errorf("couldn't extract claims from id_token (%e)", err)
 		}
 
-		fmt.Printf("User claims: %v\n", claims)
-
 		if claims != nil {
 
 			if !p.AllowUnverifiedEmail && claims.Verified != nil && !*claims.Verified {
 				return nil, fmt.Errorf("email in id_token (%s) isn't verified", claims.Email)
 			}
 
-			if p.verifyGroupMembership(claims.Groups); err != nil {
-				fmt.Printf("User groups: %s\n", claims.Groups)
+			if err := p.verifyGroupMembership(claims.Groups); err != nil {
 				return nil, fmt.Errorf("group %s not found in group list %s", p.Group, claims.Groups)
 			}
 
