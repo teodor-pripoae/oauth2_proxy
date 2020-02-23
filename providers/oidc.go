@@ -27,6 +27,9 @@ type OIDCProvider struct {
 // NewOIDCProvider initiates a new OIDCProvider
 func NewOIDCProvider(p *ProviderData) *OIDCProvider {
 	p.ProviderName = "OpenID Connect"
+	if p.Scope == "" {
+		p.Scope = "openid email groups profile"
+	}
 	return &OIDCProvider{ProviderData: p}
 }
 
