@@ -18,6 +18,8 @@ import (
 type OIDCProvider struct {
 	*ProviderData
 
+	Group string
+
 	Verifier             *oidc.IDTokenVerifier
 	AllowUnverifiedEmail bool
 }
@@ -162,6 +164,10 @@ func (p *OIDCProvider) createSessionState(token *oauth2.Token, idToken *oidc.IDT
 				return nil, fmt.Errorf("email in id_token (%s) isn't verified", claims.Email)
 			}
 
+			if p.verifyGroupMembership(claims.Groups); err != nil {
+				return nil, fmt.Errorf("group %s not found in group list %s", p.Group, claims.Groups)
+			}
+
 			newSession.IDToken = token.Extra("id_token").(string)
 			newSession.Email = claims.Email
 			newSession.User = claims.Subject
@@ -184,6 +190,28 @@ func (p *OIDCProvider) ValidateSessionState(s *sessions.SessionState) bool {
 	}
 
 	return true
+}
+
+func (p *OIDCProvider) verifyGroupMembership(groups []string) error {
+	if p.Group == "" {
+		return nil
+	}
+
+	// Collect user group memberships
+	membershipSet := make(map[string]bool)
+	for _, group := range groups {
+		membershipSet[group] = true
+	}
+
+	// Find a valid group that they are a member of
+	validGroups := strings.Split(p.Group, " ")
+	for _, validGroup := range validGroups {
+		if _, ok := membershipSet[validGroup]; ok {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("user is not a member of '%s'", p.Group)
 }
 
 func getOIDCHeader(accessToken string) http.Header {
@@ -233,7 +261,8 @@ func findClaimsFromIDToken(idToken *oidc.IDToken, accessToken string, profileURL
 }
 
 type OIDCClaims struct {
-	Subject  string `json:"sub"`
-	Email    string `json:"email"`
-	Verified *bool  `json:"email_verified"`
+	Subject  string   `json:"sub"`
+	Email    string   `json:"email"`
+	Verified *bool    `json:"email_verified"`
+	Groups   []string `json:"groups"`
 }
