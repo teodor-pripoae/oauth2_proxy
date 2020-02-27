@@ -23,7 +23,7 @@ import (
 	"github.com/pusher/oauth2_proxy/pkg/logger"
 	"github.com/pusher/oauth2_proxy/pkg/sessions"
 	"github.com/pusher/oauth2_proxy/providers"
-	"gopkg.in/natefinch/lumberjack.v2"
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
 // Options holds Configuration Options that can be set by Command Line Flag,
@@ -56,6 +56,7 @@ type Options struct {
 	GoogleGroups             []string `flag:"google-group" cfg:"google_group" env:"OAUTH2_PROXY_GOOGLE_GROUPS"`
 	GoogleAdminEmail         string   `flag:"google-admin-email" cfg:"google_admin_email" env:"OAUTH2_PROXY_GOOGLE_ADMIN_EMAIL"`
 	GoogleServiceAccountJSON string   `flag:"google-service-account-json" cfg:"google_service_account_json" env:"OAUTH2_PROXY_GOOGLE_SERVICE_ACCOUNT_JSON"`
+	OIDCGroup                string   `flag:"oidc-group" cfg:"oidc_group" env:"OAUTH2_PROXY_OIDC_GROUP"`
 	HtpasswdFile             string   `flag:"htpasswd-file" cfg:"htpasswd_file" env:"OAUTH2_PROXY_HTPASSWD_FILE"`
 	DisplayHtpasswdForm      bool     `flag:"display-htpasswd-form" cfg:"display_htpasswd_form" env:"OAUTH2_PROXY_DISPLAY_HTPASSWD_FORM"`
 	CustomTemplatesDir       string   `flag:"custom-templates-dir" cfg:"custom_templates_dir" env:"OAUTH2_PROXY_CUSTOM_TEMPLATES_DIR"`
@@ -435,6 +436,7 @@ func parseProviderInfo(o *Options, msgs []string) []string {
 		p.SetRepository(o.BitbucketRepository)
 	case *providers.OIDCProvider:
 		p.AllowUnverifiedEmail = o.InsecureOIDCAllowUnverifiedEmail
+		p.Group = o.OIDCGroup
 		if o.oidcVerifier == nil {
 			msgs = append(msgs, "oidc provider requires an oidc issuer URL")
 		} else {
